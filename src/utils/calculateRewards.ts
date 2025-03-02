@@ -72,6 +72,56 @@ export const calculateRewards = (totalRewards: RewardsObject, users: User[]): Re
     tome: totalRewards.tome - sum(rewards, r => r.tome),
   };
 
+  for (let index = 0; index < 100; index++) {
+    const usersWithMinRewards = new Set(rewards.filter(user => !user.receivedMinRewards));
+
+    if (!usersWithMinRewards.size) {
+      break;
+    }
+
+    for (const user of rewards) {
+      if (usersWithMinRewards.has(user)) {
+        continue;
+      }
+
+      const mult = user.damage / 100;
+
+      const token = remainingRewards.token * mult;
+      const dust = remainingRewards.dust * mult;
+      const contract = remainingRewards.contract * mult;
+      const tome = remainingRewards.tome * mult;
+
+      const shouldReceiveMinToken = token < minRewards.token;
+      const shouldReceiveMinDust = dust < minRewards.dust;
+      const shouldReceiveMinContract = contract < minRewards.contract;
+      const shouldReceiveMinTome = tome < minRewards.tome;
+
+      if (shouldReceiveMinToken) {
+        user.token = minRewards.token;
+      }
+      if (shouldReceiveMinDust) {
+        user.dust = minRewards.dust;
+      }
+      if (shouldReceiveMinContract) {
+        user.contract = minRewards.contract;
+      }
+      if (shouldReceiveMinTome) {
+        user.tome = minRewards.tome;
+      }
+
+      const hasAttributedMinRewards = shouldReceiveMinToken || shouldReceiveMinDust || shouldReceiveMinContract || shouldReceiveMinTome;
+
+      if (hasAttributedMinRewards) {
+        usersWithMinRewards.add(user);
+      }
+    }
+
+    remainingRewards.token = totalRewards.token - sum(rewards, r => r.token);
+    remainingRewards.dust = totalRewards.dust - sum(rewards, r => r.dust);
+    remainingRewards.contract = totalRewards.contract - sum(rewards, r => r.contract);
+    remainingRewards.tome = totalRewards.tome - sum(rewards, r => r.tome);
+  }
+
   for (const reward of rewards) {
     const mult = reward.damage / 100;
 

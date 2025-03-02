@@ -42,6 +42,10 @@ export const store = createStore({
   } as State,
 
   on: {
+    import: (_context, event: { data: string }) => {
+      return JSON.parse(event.data);
+    },
+
     updateReward: (context, event: { name: keyof RewardsObject; value: number; }) => {
       const totalRewards = {
         ...context.totalRewards,
@@ -113,3 +117,11 @@ export const store = createStore({
     },
   },
 });
+
+(window as any).export = () => {
+  return JSON.stringify(store.getSnapshot().context);
+}
+
+(window as any).import = (value: string) => {
+  return store.send({ type: 'import', data: value });
+}
